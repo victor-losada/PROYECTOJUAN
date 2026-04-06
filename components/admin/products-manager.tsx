@@ -39,6 +39,7 @@ type ProductFormData = {
   imagen_url: string
   stock: number
   activo: boolean
+  disponible: boolean
 }
 
 const defaultFormData: ProductFormData = {
@@ -49,6 +50,7 @@ const defaultFormData: ProductFormData = {
   imagen_url: '',
   stock: 0,
   activo: true,
+  disponible: true,
 }
 
 function formatPrice(price: number): string {
@@ -92,6 +94,7 @@ export function ProductsManager({ productos }: ProductsManagerProps) {
       imagen_url: producto.imagen_url || '',
       stock: producto.stock,
       activo: producto.activo,
+      disponible: producto.disponible ?? true,
     })
     setIsDialogOpen(true)
   }
@@ -211,9 +214,14 @@ export function ProductsManager({ productos }: ProductsManagerProps) {
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-medium line-clamp-1">{producto.nombre}</h3>
-                    {!producto.activo && (
-                      <span className="text-xs bg-muted px-2 py-0.5 rounded">Inactivo</span>
-                    )}
+                    <div className="flex gap-1">
+                      {!producto.disponible && (
+                        <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded">No disponible</span>
+                      )}
+                      {!producto.activo && (
+                        <span className="text-xs bg-muted px-2 py-0.5 rounded">Inactivo</span>
+                      )}
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2">
                     {producto.descripcion}
@@ -337,7 +345,16 @@ export function ProductsManager({ productos }: ProductsManagerProps) {
             </div>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="activo">Producto Activo</Label>
+              <Label htmlFor="disponible">Disponible para compra</Label>
+              <Switch
+                id="disponible"
+                checked={formData.disponible}
+                onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, disponible: checked }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="activo">Producto Activo (visible)</Label>
               <Switch
                 id="activo"
                 checked={formData.activo}

@@ -8,6 +8,7 @@ export interface Producto {
   imagen_url: string | null
   stock: number
   activo: boolean
+  disponible: boolean
   created_at: string
   updated_at: string
 }

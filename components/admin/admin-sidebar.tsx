@@ -13,6 +13,7 @@ import {
   LogOut,
   Menu,
   X,
+  ImageIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -22,6 +23,7 @@ const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Resumen' },
   { href: '/admin/pedidos', icon: ShoppingBag, label: 'Pedidos' },
   { href: '/admin/productos', icon: Package, label: 'Productos' },
+  { href: '/admin/contenido', icon: ImageIcon, label: 'Contenido' },
   { href: '/admin/resenas', icon: MessageSquare, label: 'Resenas' },
 ]
 

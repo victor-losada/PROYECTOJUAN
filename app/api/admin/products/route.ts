@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { nombre, descripcion, precio, categoria, imagen_url, stock, activo } = body
+    const { nombre, descripcion, precio, categoria, imagen_url, stock, activo, disponible } = body
 
     if (!nombre || precio === undefined || !categoria) {
       return NextResponse.json(
@@ -34,6 +34,7 @@ export async function POST(request: NextRequest) {
         imagen_url: imagen_url || null,
         stock: stock || 0,
         activo: activo !== undefined ? activo : true,
+        disponible: disponible !== undefined ? disponible : true,
       })
       .select()
       .single()

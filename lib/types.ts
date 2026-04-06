@@ -93,17 +93,17 @@ export const CATEGORIAS = [
 export const SUBCATEGORIAS = {
   regional_huila: [
     { value: 'natural', label: 'Natural' },
-    { value: 'lavado', label: 'Lavado' },
-    { value: 'honey', label: 'Honey' },
+    { value: 'suave_lavado', label: 'Suave Lavado' },
+    
   ],
   varietales: [
-    { value: 'caturra', label: 'Caturra' },
-    { value: 'castillo', label: 'Castillo' },
-    { value: 'geisha', label: 'Geisha' },
+    { value: 'natural', label: 'Natural' },
+    { value: 'suave_lavado', label: 'Suave Lavado' },
+    { value: 'honey', label: 'Honey' },
   ],
   cofermentados: [
-    { value: 'frutos_rojos', label: 'Frutos Rojos' },
-    { value: 'citrico', label: 'Cítrico' },
+    { value: 'natural', label: 'Natural' },
+    { value: 'suave_lavado', label: 'Suave Lavado' },
   ],
 } as const
 

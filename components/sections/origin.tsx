@@ -1,34 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
-interface SiteContent {
-  section: string
-  content_type: 'video' | 'image'
-  url: string
-}
 
 export function Origin() {
-  const [content, setContent] = useState<SiteContent | null>(null)
-
-  useEffect(() => {
-    async function fetchContent() {
-      const { data } = await supabase
-        .from('site_content')
-        .select('*')
-        .eq('section', 'origin')
-        .single()
-      
-      if (data) setContent(data)
-    }
-    fetchContent()
-  }, [])
 
   return (
     <section id="origen" className="py-16 lg:py-24 bg-white">
@@ -42,23 +17,12 @@ export function Origin() {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
           {/* Image or Video */}
           <div className="relative">
-            <div className="aspect-[4/3] overflow-hidden">
-              {content?.content_type === 'video' ? (
-                <video
-                  src={content.url}
-                  className="h-full w-full object-cover"
-                  autoPlay
-                  muted
-                  loop
-                  playsInline
-                />
-              ) : (
+            <div className="aspect-[4/3] overflow-hidden">    
                 <img
-                  src={content?.url || "/images/origenfinca.png"}
+                  src={ "/images/origenfinca.png"}
                   alt="Finca cafetera en las montanas de Huila, Colombia"
                   className="h-full w-full object-cover"
                 />
-              )}
             </div>
           </div>
 

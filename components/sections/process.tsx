@@ -1,19 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
 import { Sprout, Sun, Flame, Package } from "lucide-react"
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
-interface SiteContent {
-  section: string
-  content_type: 'video' | 'image'
-  url: string
-}
 
 const steps = [
   {
@@ -43,20 +32,7 @@ const steps = [
 ]
 
 export function ProcessSection() {
-  const [content, setContent] = useState<SiteContent | null>(null)
-
-  useEffect(() => {
-    async function fetchContent() {
-      const { data } = await supabase
-        .from('site_content')
-        .select('*')
-        .eq('section', 'process')
-        .single()
-      
-      if (data) setContent(data)
-    }
-    fetchContent()
-  }, [])
+  
 
   return (
     <section id="proceso" className="bg-secondary py-24">
@@ -64,22 +40,13 @@ export function ProcessSection() {
         <div className="grid items-start gap-12 lg:grid-cols-2">
           {/* Left - Image or Video */}
           <div className="relative aspect-[3/4] overflow-hidden rounded-md lg:sticky lg:top-24">
-            {content?.content_type === 'video' ? (
-              <video
-                src={content.url}
-                className="h-full w-full object-cover"
-                autoPlay
-                muted
-                loop
-                playsInline
-              />
-            ) : (
+            
               <img
-                src={content?.url || "/images/process.png"}
+                src={"/images/process.png"}
                 alt="Proceso artesanal de tueste de cafe"
                 className="h-full w-full object-cover"
               />
-            )}
+            
           </div>
 
           {/* Right - Steps */}

@@ -1,0 +1,113 @@
+export interface Producto {
+  id: string
+  nombre: string
+  descripcion: string | null
+  precio: number
+  categoria: string
+<<<<<<< HEAD
+=======
+  subcategoria: string
+>>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
+  imagen_url: string | null
+  stock: number
+  activo: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CartItem {
+  producto: Producto
+  cantidad: number
+}
+
+export interface Pedido {
+  id: string
+  codigo: string
+  nombre_cliente: string
+  telefono: string
+  email: string
+<<<<<<< HEAD
+  tipo_entrega: 'domicilio' | 'recoger'
+=======
+  tipo_entrega: 'domicilio' 
+>>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
+  direccion: string | null
+  estado: 'pendiente' | 'en_preparacion' | 'en_camino' | 'entregado' | 'cancelado'
+  subtotal: number
+  total: number
+  wompi_transaction_id: string | null
+  wompi_status: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PedidoItem {
+  id: string
+  pedido_id: string
+  producto_id: string | null
+  nombre_producto: string
+  precio_unitario: number
+  cantidad: number
+  subtotal: number
+  created_at: string
+}
+
+export interface PedidoConItems extends Pedido {
+  items: PedidoItem[]
+}
+
+export interface Resena {
+  id: string
+  pedido_id: string | null
+  codigo_pedido: string
+  nombre_cliente: string
+  calificacion: number
+  comentario: string | null
+  aprobada: boolean
+  created_at: string
+}
+
+export type EstadoPedido = Pedido['estado']
+
+export const ESTADOS_PEDIDO: Record<EstadoPedido, { label: string; color: string }> = {
+  pendiente: { label: 'Pendiente', color: 'bg-yellow-100 text-yellow-800' },
+  en_preparacion: { label: 'En Preparacion', color: 'bg-blue-100 text-blue-800' },
+  en_camino: { label: 'En Camino', color: 'bg-purple-100 text-purple-800' },
+  entregado: { label: 'Entregado', color: 'bg-green-100 text-green-800' },
+  cancelado: { label: 'Cancelado', color: 'bg-red-100 text-red-800' },
+}
+
+export const CATEGORIAS = [
+  { value: 'todos', label: 'Todos' },
+<<<<<<< HEAD
+  { value: 'granos', label: 'Granos Enteros' },
+  { value: 'molido', label: 'Molido' },
+  { value: 'accesorios', label: 'Accesorios' },
+  { value: 'ofertas', label: 'Ofertas' },
+] as const
+
+=======
+  { value: 'regional_huila', label: 'Regional huila' },
+  { value: 'varietales', label: 'Varietales' },
+  { value: 'cofermentados', label: 'Cofermentados' },
+] as const
+
+export const SUBCATEGORIAS = {
+  regional_huila: [
+    { value: 'natural', label: 'Natural' },
+    { value: 'lavado', label: 'Lavado' },
+    { value: 'honey', label: 'Honey' },
+  ],
+  varietales: [
+    { value: 'caturra', label: 'Caturra' },
+    { value: 'castillo', label: 'Castillo' },
+    { value: 'geisha', label: 'Geisha' },
+  ],
+  cofermentados: [
+    { value: 'frutos_rojos', label: 'Frutos Rojos' },
+    { value: 'citrico', label: 'Cítrico' },
+  ],
+} as const
+
+>>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
+export type Categoria = typeof CATEGORIAS[number]['value']

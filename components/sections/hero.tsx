@@ -3,18 +3,61 @@
 import { Button } from '@/components/ui/button'
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
+interface SiteContent {
+  section: string
+  content_type: 'video' | 'image'
+  url: string
+}
 
 export function Hero() {
+  const [heroContent, setHeroContent] = useState<SiteContent | null>(null)
+
+  useEffect(() => {
+    async function fetchHeroContent() {
+      const { data } = await supabase
+        .from('site_content')
+        .select('*')
+        .eq('section', 'hero')
+        .single()
+      
+      if (data) {
+        setHeroContent(data)
+      }
+    }
+    fetchHeroContent()
+  }, [])
+
   return (
     <section className="relative min-h-[100vh] flex items-center justify-center overflow-hidden">
-      {/* Background Image */}
+      {/* Background Video or Image */}
       <div className="absolute inset-0">
-        <img
-          src="/images/herocafetal.png"
-          alt="Taza de cafe con granos"
-          className="h-full w-full object-cover"
-        />
-        <div className="absolute inset-0 bg-black/20" />
+        {heroContent?.content_type === 'video' ? (
+          <video
+            autoPlay
+            muted
+            loop
+            playsInline
+            className="h-full w-full object-cover"
+            poster="/images/herocafetal.png"
+          >
+            <source src={heroContent.url} type="video/mp4" />
+          </video>
+        ) : (
+          <img
+            src={heroContent?.url || "/images/herocafetal.png"}
+            alt="Taza de cafe con granos"
+            className="h-full w-full object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-black/40" />
       </div>
       
       {/* Content Card - Frosted Glass Effect */}
@@ -35,7 +78,7 @@ export function Hero() {
           </p>
           
           {/* Buttons */}
-          <div className="mt-10  flex flex-wrap gap-4">
+          <div className="mt-10 flex flex-wrap gap-4">
             <Link href="/#productos">
               <Button
                 size="lg"
@@ -48,8 +91,7 @@ export function Hero() {
             <Link href="/#origen">
               <Button
                 size="lg"
-                
-                className="bg-background text-foreground hover:bg-background/90 "
+                className="bg-background text-foreground hover:bg-background/90"
               >
                 Conocer la historia
               </Button>

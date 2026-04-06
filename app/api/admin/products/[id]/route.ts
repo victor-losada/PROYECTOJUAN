@@ -19,7 +19,11 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { nombre, descripcion, precio, categoria, imagen_url, stock, activo } = body
+    const { 
+      nombre, descripcion, precio, categoria, subcategoria, imagen_url, stock, activo, disponible,
+      origen, nombre_finca, productor, altitud, cosecha, puntaje_sca, perfil_sensorial,
+      metodo_secado, tiempo_secado, proceso, presentacion
+    } = body
 
     if (!nombre || precio === undefined || !categoria) {
       return NextResponse.json(
@@ -35,9 +39,22 @@ export async function PUT(
         descripcion: descripcion || null,
         precio,
         categoria,
+        subcategoria: subcategoria || null,
         imagen_url: imagen_url || null,
         stock: stock || 0,
         activo: activo !== undefined ? activo : true,
+        disponible: disponible !== undefined ? disponible : true,
+        origen: origen || null,
+        nombre_finca: nombre_finca || null,
+        productor: productor || null,
+        altitud: altitud || null,
+        cosecha: cosecha || null,
+        puntaje_sca: puntaje_sca || null,
+        perfil_sensorial: perfil_sensorial || null,
+        metodo_secado: metodo_secado || null,
+        tiempo_secado: tiempo_secado || null,
+        proceso: proceso || null,
+        presentacion: presentacion || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', id)

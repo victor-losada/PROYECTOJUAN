@@ -20,10 +20,10 @@ export default async function AdminResenasPage() {
   const resenas = await getReviews()
 
   return (
-    <div className="p-6 lg:p-8 space-y-6">
+    <div className="p-6 lg:p-8 space-y-6 bg-stone-50 min-h-screen">
       <div>
-        <h1 className="font-display text-3xl font-bold">Resenas</h1>
-        <p className="text-muted-foreground mt-1">
+        <h1 className="text-3xl font-bold text-stone-800">Resenas</h1>
+        <p className="text-stone-500 mt-1">
           Modera las resenas de los clientes
         </p>
       </div>

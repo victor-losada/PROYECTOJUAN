@@ -8,6 +8,19 @@ export interface Producto {
   imagen_url: string | null
   stock: number
   activo: boolean
+  disponible: boolean
+  // Ficha técnica
+  origen: string | null
+  nombre_finca: string | null
+  productor: string | null
+  altitud: string | null
+  cosecha: string | null
+  puntaje_sca: number | null
+  perfil_sensorial: string | null
+  metodo_secado: string | null
+  tiempo_secado: string | null
+  proceso: string | null
+  presentacion: string | null
   created_at: string
   updated_at: string
 }

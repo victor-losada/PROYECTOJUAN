@@ -8,9 +8,6 @@ import { CartDrawer } from '@/components/cart/cart-drawer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Search,
   Package,
@@ -18,9 +15,8 @@ import {
   Truck,
   CheckCircle,
   XCircle,
-  Star,
   Loader2,
-  MessageSquare,
+  Download,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ESTADOS_PEDIDO, type PedidoConItems, type EstadoPedido } from '@/lib/types'
@@ -58,14 +54,6 @@ function TrackingContent() {
   const [isLoading, setIsLoading] = useState(false)
   const [hasSearched, setHasSearched] = useState(false)
 
-  // Review form state
-  const [reviewForm, setReviewForm] = useState({
-    codigoPedido: '',
-    calificacion: 5,
-    comentario: '',
-  })
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false)
-
   useEffect(() => {
     if (initialCodigo) {
       handleSearch()
@@ -99,39 +87,9 @@ function TrackingContent() {
     }
   }
 
-  const handleSubmitReview = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!reviewForm.codigoPedido.trim()) {
-      toast.error('Ingresa tu codigo de pedido')
-      return
-    }
-
-    if (!reviewForm.comentario.trim()) {
-      toast.error('Escribe un comentario')
-      return
-    }
-
-    setIsSubmittingReview(true)
-
-    try {
-      const response = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(reviewForm),
-      })
-
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error || 'Error al enviar la resena')
-      }
-
-      toast.success('Resena enviada. Sera visible una vez aprobada.')
-      setReviewForm({ codigoPedido: '', calificacion: 5, comentario: '' })
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Error al enviar la resena')
-    } finally {
-      setIsSubmittingReview(false)
+  const handleDownloadReceipt = () => {
+    if (pedido) {
+      window.open(`/api/orders/${pedido.codigo}/receipt`, '_blank')
     }
   }
 
@@ -150,269 +108,177 @@ function TrackingContent() {
           </p>
         </div>
 
-        <Tabs defaultValue="tracking" className="space-y-8">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="tracking">Seguimiento</TabsTrigger>
-            <TabsTrigger value="review">Dejar Resena</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="tracking" className="space-y-6">
-            {/* Search Form */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <Input
-                      placeholder="Codigo de pedido (PED-2026-XXXX) o telefono"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    />
-                  </div>
-                  <Button onClick={handleSearch} disabled={isLoading}>
-                    {isLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Search className="h-4 w-4" />
-                    )}
-                    <span className="ml-2 hidden sm:inline">Buscar</span>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Results */}
-            {hasSearched && !isLoading && (
-              <>
-                {pedido ? (
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="font-display">
-                          Pedido {pedido.codigo}
-                        </CardTitle>
-                        <span
-                          className={cn(
-                            'px-3 py-1 rounded-full text-xs font-medium',
-                            ESTADOS_PEDIDO[pedido.estado].color
-                          )}
-                        >
-                          {ESTADOS_PEDIDO[pedido.estado].label}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
-                      {/* Tracking Timeline */}
-                      {pedido.estado !== 'cancelado' ? (
-                        <div className="relative">
-                          <div className="flex justify-between">
-                            {TRACKING_STEPS.map((step, index) => {
-                              const currentStep = getCurrentStep(pedido.estado)
-                              const isCompleted = index <= currentStep
-                              const isCurrent = index === currentStep
-                              const Icon = step.icon
-
-                              return (
-                                <div
-                                  key={step.estado}
-                                  className="flex flex-col items-center relative z-10"
-                                >
-                                  <div
-                                    className={cn(
-                                      'w-12 h-12 rounded-full flex items-center justify-center border-2 transition-colors',
-                                      isCompleted
-                                        ? 'bg-primary border-primary text-primary-foreground'
-                                        : 'bg-background border-border text-muted-foreground'
-                                    )}
-                                  >
-                                    <Icon className="h-5 w-5" />
-                                  </div>
-                                  <span
-                                    className={cn(
-                                      'text-xs mt-2 text-center max-w-[80px]',
-                                      isCurrent ? 'font-medium text-foreground' : 'text-muted-foreground'
-                                    )}
-                                  >
-                                    {step.label}
-                                  </span>
-                                </div>
-                              )
-                            })}
-                          </div>
-                          {/* Progress line */}
-                          <div className="absolute top-6 left-6 right-6 h-0.5 bg-border -z-10">
-                            <div
-                              className="h-full bg-primary transition-all"
-                              style={{
-                                width: `${(getCurrentStep(pedido.estado) / (TRACKING_STEPS.length - 1)) * 100}%`,
-                              }}
-                            />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-center gap-3 py-6 text-destructive">
-                          <XCircle className="h-8 w-8" />
-                          <span className="font-medium">Pedido Cancelado</span>
-                        </div>
-                      )}
-
-                      {/* Order Details */}
-                      <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Cliente</p>
-                          <p className="font-medium">{pedido.nombre_cliente}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Telefono</p>
-                          <p className="font-medium">{pedido.telefono}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Entrega</p>
-                          <p className="font-medium">
-                            {pedido.tipo_entrega === 'domicilio' ? 'A domicilio' : 'Recoger en tienda'}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Fecha</p>
-                          <p className="font-medium">{formatDate(pedido.created_at)}</p>
-                        </div>
-                      </div>
-
-                      {/* Items */}
-                      {pedido.items && pedido.items.length > 0 && (
-                        <div className="pt-4 border-t">
-                          <h4 className="font-medium mb-3">Productos</h4>
-                          <div className="space-y-2">
-                            {pedido.items.map((item) => (
-                              <div
-                                key={item.id}
-                                className="flex justify-between text-sm"
-                              >
-                                <span>
-                                  {item.nombre_producto} x{item.cantidad}
-                                </span>
-                                <span>{formatPrice(item.subtotal)}</span>
-                              </div>
-                            ))}
-                          </div>
-                          <div className="flex justify-between font-semibold mt-4 pt-4 border-t">
-                            <span>Total</span>
-                            <span className="font-display text-lg">
-                              {formatPrice(pedido.total)}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+        {/* Search Form */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <Input
+                  placeholder="Codigo de pedido (PED-2026-XXXX) o telefono"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+              </div>
+              <Button onClick={handleSearch} disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Card>
-                    <CardContent className="py-12 text-center">
-                      <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="font-medium">Pedido no encontrado</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Verifica que el codigo o telefono sea correcto
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <Search className="h-4 w-4" />
                 )}
-              </>
-            )}
-          </TabsContent>
+                <span className="ml-2 hidden sm:inline">Buscar</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
-          <TabsContent value="review">
-            <Card>
-              <CardHeader>
-                <CardTitle className="font-display flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Deja tu Resena
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmitReview} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="codigoPedido">Codigo de Pedido *</Label>
-                    <Input
-                      id="codigoPedido"
-                      placeholder="PED-2026-XXXX"
-                      value={reviewForm.codigoPedido}
-                      onChange={(e) =>
-                        setReviewForm((prev) => ({
-                          ...prev,
-                          codigoPedido: e.target.value,
-                        }))
-                      }
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      Necesitas un codigo de pedido valido para dejar una resena
-                    </p>
+        {/* Results */}
+        {hasSearched && !isLoading && (
+          <>
+            {pedido ? (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <CardTitle className="font-display">
+                      Pedido {pedido.codigo}
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={cn(
+                          'px-3 py-1 rounded-full text-xs font-medium',
+                          ESTADOS_PEDIDO[pedido.estado].color
+                        )}
+                      >
+                        {ESTADOS_PEDIDO[pedido.estado].label}
+                      </span>
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleDownloadReceipt}
+                      >
+                        <Download className="h-4 w-4 mr-1" />
+                        Factura
+                      </Button>
+                    </div>
                   </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Tracking Timeline */}
+                  {pedido.estado !== 'cancelado' ? (
+                    <div className="relative">
+                      <div className="flex justify-between">
+                        {TRACKING_STEPS.map((step, index) => {
+                          const currentStep = getCurrentStep(pedido.estado)
+                          const isCompleted = index <= currentStep
+                          const isCurrent = index === currentStep
+                          const Icon = step.icon
 
-                  <div className="space-y-2">
-                    <Label>Calificacion *</Label>
-                    <div className="flex gap-1">
-                      {[1, 2, 3, 4, 5].map((rating) => (
-                        <button
-                          key={rating}
-                          type="button"
-                          onClick={() =>
-                            setReviewForm((prev) => ({
-                              ...prev,
-                              calificacion: rating,
-                            }))
-                          }
-                          className="p-1 hover:scale-110 transition-transform"
-                        >
-                          <Star
-                            className={cn(
-                              'h-8 w-8',
-                              rating <= reviewForm.calificacion
-                                ? 'fill-accent text-accent'
-                                : 'fill-muted text-muted'
-                            )}
-                          />
-                        </button>
-                      ))}
+                          return (
+                            <div
+                              key={step.estado}
+                              className="flex flex-col items-center relative z-10"
+                            >
+                              <div
+                                className={cn(
+                                  'w-12 h-12 rounded-full flex items-center justify-center border-2 transition-colors',
+                                  isCompleted
+                                    ? 'bg-primary border-primary text-primary-foreground'
+                                    : 'bg-background border-border text-muted-foreground'
+                                )}
+                              >
+                                <Icon className="h-5 w-5" />
+                              </div>
+                              <span
+                                className={cn(
+                                  'text-xs mt-2 text-center max-w-[80px]',
+                                  isCurrent ? 'font-medium text-foreground' : 'text-muted-foreground'
+                                )}
+                              >
+                                {step.label}
+                              </span>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {/* Progress line */}
+                      <div className="absolute top-6 left-6 right-6 h-0.5 bg-border -z-10">
+                        <div
+                          className="h-full bg-primary transition-all"
+                          style={{
+                            width: `${(getCurrentStep(pedido.estado) / (TRACKING_STEPS.length - 1)) * 100}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-center gap-3 py-6 text-destructive">
+                      <XCircle className="h-8 w-8" />
+                      <span className="font-medium">Pedido Cancelado</span>
+                    </div>
+                  )}
+
+                  {/* Order Details */}
+                  <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Cliente</p>
+                      <p className="font-medium">{pedido.nombre_cliente}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Telefono</p>
+                      <p className="font-medium">{pedido.telefono}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Entrega</p>
+                      <p className="font-medium">
+                        {pedido.tipo_entrega === 'domicilio' ? 'A domicilio' : 'Recoger en tienda'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Fecha</p>
+                      <p className="font-medium">{formatDate(pedido.created_at)}</p>
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="comentario">Tu Comentario *</Label>
-                    <Textarea
-                      id="comentario"
-                      placeholder="Cuentanos tu experiencia con CoffeJuancho..."
-                      value={reviewForm.comentario}
-                      onChange={(e) =>
-                        setReviewForm((prev) => ({
-                          ...prev,
-                          comentario: e.target.value,
-                        }))
-                      }
-                      rows={4}
-                      required
-                    />
-                  </div>
-
-                  <Button
-                    type="submit"
-                    className="w-full"
-                    disabled={isSubmittingReview}
-                  >
-                    {isSubmittingReview ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Enviando...
-                      </>
-                    ) : (
-                      'Enviar Resena'
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+                  {/* Items */}
+                  {pedido.items && pedido.items.length > 0 && (
+                    <div className="pt-4 border-t">
+                      <h4 className="font-medium mb-3">Productos</h4>
+                      <div className="space-y-2">
+                        {pedido.items.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex justify-between text-sm"
+                          >
+                            <span>
+                              {item.nombre_producto} x{item.cantidad}
+                            </span>
+                            <span>{formatPrice(item.subtotal)}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between font-semibold mt-4 pt-4 border-t">
+                        <span>Total</span>
+                        <span className="font-display text-lg">
+                          {formatPrice(pedido.total)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="font-medium">Pedido no encontrado</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Verifica que el codigo o telefono sea correcto
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
       </div>
     </div>
   )

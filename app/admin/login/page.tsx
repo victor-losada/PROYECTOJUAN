@@ -56,12 +56,8 @@ export default function AdminLoginPage() {
           </div>
           <CardTitle className="font-display text-2xl">Panel de Administracion</CardTitle>
           <CardDescription>
-<<<<<<< HEAD
-            Ingresa tus credenciales para acceder al panel
-=======
             Ingresa tus credenciales para acceder al panel. Si aun no tienes
             usuario, crea uno en Supabase: Authentication, Users, Add user.
->>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
           </CardDescription>
         </CardHeader>
         <CardContent>

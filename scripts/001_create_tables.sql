@@ -8,10 +8,7 @@ CREATE TABLE IF NOT EXISTS productos (
   descripcion TEXT,
   precio DECIMAL(10, 2) NOT NULL,
   categoria TEXT NOT NULL,
-<<<<<<< HEAD
-=======
   subcategoria TEXT DEFAULT '',
->>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
   imagen_url TEXT,
   stock INTEGER NOT NULL DEFAULT 0,
   activo BOOLEAN DEFAULT true,

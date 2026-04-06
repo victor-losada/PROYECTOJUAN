@@ -12,10 +12,7 @@ const navLinks = [
   { href: '/#productos', label: 'TIENDA' },
   { href: '/#origen', label: 'ORIGEN' },
   { href: '/#proceso', label: 'PROCESO' },
-<<<<<<< HEAD
-=======
   { href: '/#resenas', label: 'RESEÑAS' },
->>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
   { href: '/seguimiento', label: 'MI PEDIDO' },
 ]
 

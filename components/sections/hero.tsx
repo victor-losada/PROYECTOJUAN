@@ -10,11 +10,7 @@ export function Hero() {
       {/* Background Image */}
       <div className="absolute inset-0">
         <img
-<<<<<<< HEAD
-          src="/images/hero-coffee.jpg"
-=======
           src="/images/herocafetal.png"
->>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
           alt="Taza de cafe con granos"
           className="h-full w-full object-cover"
         />

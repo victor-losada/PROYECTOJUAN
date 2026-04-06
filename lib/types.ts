@@ -4,10 +4,7 @@ export interface Producto {
   descripcion: string | null
   precio: number
   categoria: string
-<<<<<<< HEAD
-=======
   subcategoria: string
->>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
   imagen_url: string | null
   stock: number
   activo: boolean
@@ -26,11 +23,7 @@ export interface Pedido {
   nombre_cliente: string
   telefono: string
   email: string
-<<<<<<< HEAD
   tipo_entrega: 'domicilio' | 'recoger'
-=======
-  tipo_entrega: 'domicilio' 
->>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
   direccion: string | null
   estado: 'pendiente' | 'en_preparacion' | 'en_camino' | 'entregado' | 'cancelado'
   subtotal: number
@@ -79,14 +72,6 @@ export const ESTADOS_PEDIDO: Record<EstadoPedido, { label: string; color: string
 
 export const CATEGORIAS = [
   { value: 'todos', label: 'Todos' },
-<<<<<<< HEAD
-  { value: 'granos', label: 'Granos Enteros' },
-  { value: 'molido', label: 'Molido' },
-  { value: 'accesorios', label: 'Accesorios' },
-  { value: 'ofertas', label: 'Ofertas' },
-] as const
-
-=======
   { value: 'regional_huila', label: 'Regional huila' },
   { value: 'varietales', label: 'Varietales' },
   { value: 'cofermentados', label: 'Cofermentados' },
@@ -109,5 +94,4 @@ export const SUBCATEGORIAS = {
   ],
 } as const
 
->>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
 export type Categoria = typeof CATEGORIAS[number]['value']

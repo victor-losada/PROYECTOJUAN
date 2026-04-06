@@ -53,15 +53,9 @@ export default async function HomePage() {
       <Header />
       <main className="flex-1">
         <Hero />
-<<<<<<< HEAD
-        <Origin />
-        <ProcessSection />
-        <ProductsGrid productos={productos} />
-=======
         <ProductsGrid productos={productos} />
         <Origin />
         <ProcessSection />
->>>>>>> afa3ce5 (video en el hero y cambios en las funciones del administrador)
         <Reviews resenas={resenas} />
       </main>
       <Footer />

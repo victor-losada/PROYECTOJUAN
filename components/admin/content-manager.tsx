@@ -1,89 +1,90 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useState, useRef, useEffect } from 'react'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Upload, Video, ImageIcon, Loader2, Check } from 'lucide-react'
+import { Upload, Loader2, Video, ImageIcon } from 'lucide-react'
 import { toast } from 'sonner'
-import { put } from '@vercel/blob'
 
 interface SiteContent {
   id: string
   section: string
   content_type: 'video' | 'image'
   url: string
-  updated_at: string
 }
 
 const SECTIONS = [
-  { key: 'hero', label: 'Hero (Inicio)', description: 'Video o imagen de fondo en la seccion principal' },
-  { key: 'origin', label: 'Origen', description: 'Imagen o video de la seccion de origen de la finca' },
-  { key: 'process', label: 'Proceso', description: 'Imagen o video de la seccion del proceso del cafe' },
+  { 
+    key: 'hero', 
+    title: 'Hero (Inicio)', 
+    description: 'Video o imagen de fondo en la seccion principal',
+  },
+  { 
+    key: 'origin', 
+    title: 'Origen', 
+    description: 'Contenido para la seccion de origen del cafe',
+  },
+  { 
+    key: 'process', 
+    title: 'Proceso', 
+    description: 'Contenido para la seccion de proceso',
+  },
 ]
 
 export function ContentManager() {
   const [contents, setContents] = useState<SiteContent[]>([])
   const [loading, setLoading] = useState(true)
   const [uploading, setUploading] = useState<string | null>(null)
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({})
 
   useEffect(() => {
     fetchContents()
   }, [])
 
-  async function fetchContents() {
-    const supabase = createClient()
-    const { data, error } = await supabase
-      .from('site_content')
-      .select('*')
-      .order('section')
-
-    if (error) {
-      toast.error('Error al cargar contenido')
-      return
+  const fetchContents = async () => {
+    try {
+      const response = await fetch('/api/admin/site-content')
+      if (response.ok) {
+        const data = await response.json()
+        setContents(data.contents || [])
+      }
+    } catch (error) {
+      console.error('Error fetching contents:', error)
+    } finally {
+      setLoading(false)
     }
-
-    setContents(data || [])
-    setLoading(false)
   }
 
-  async function handleFileUpload(section: string, file: File) {
-    if (!file) return
+  const getContentForSection = (section: string) => {
+    return contents.find(c => c.section === section)
+  }
 
-    const isVideo = file.type.startsWith('video/')
-    const isImage = file.type.startsWith('image/')
-
-    if (!isVideo && !isImage) {
-      toast.error('Solo se permiten imagenes o videos')
-      return
-    }
-
+  const handleFileUpload = async (section: string, file: File) => {
     setUploading(section)
 
     try {
-      // Upload to Vercel Blob
-      const blob = await put(`content/${section}-${Date.now()}.${file.name.split('.').pop()}`, file, {
-        access: 'public',
+      const formData = new FormData()
+      formData.append('file', file)
+
+      const uploadResponse = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
       })
 
-      // Update database
-      const supabase = createClient()
-      const { error } = await supabase
-        .from('site_content')
-        .upsert({
-          section,
-          content_type: isVideo ? 'video' : 'image',
-          url: blob.url,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'section'
-        })
+      if (!uploadResponse.ok) throw new Error('Error uploading file')
 
-      if (error) throw error
+      const { url } = await uploadResponse.json()
+      const contentType = file.type.startsWith('video/') ? 'video' : 'image'
 
-      toast.success('Contenido actualizado correctamente')
+      const response = await fetch('/api/admin/site-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ section, content_type: contentType, url }),
+      })
+
+      if (!response.ok) throw new Error('Error saving content')
+
+      toast.success('Contenido actualizado')
       fetchContents()
     } catch (error) {
       console.error('Upload error:', error)
@@ -93,155 +94,102 @@ export function ContentManager() {
     }
   }
 
-  async function handleTypeChange(section: string, contentType: 'video' | 'image') {
-    const content = contents.find(c => c.section === section)
-    if (!content || content.content_type === contentType) return
+  const handleInputChange = (section: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
 
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('site_content')
-      .update({ content_type: contentType, updated_at: new Date().toISOString() })
-      .eq('section', section)
-
-    if (error) {
-      toast.error('Error al actualizar tipo')
+    const isVideo = file.type.startsWith('video/')
+    const maxSize = isVideo ? 50 * 1024 * 1024 : 5 * 1024 * 1024
+    
+    if (file.size > maxSize) {
+      toast.error(`Archivo muy grande. Max: ${isVideo ? '50MB' : '5MB'}`)
       return
     }
-
-    toast.success('Tipo de contenido actualizado')
-    fetchContents()
+    
+    handleFileUpload(section, file)
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-stone-400" />
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Contenido Multimedia</h2>
-        <p className="text-muted-foreground">
-          Gestiona los videos e imagenes de las secciones principales del sitio
-        </p>
-      </div>
+    <div className="grid gap-6 md:grid-cols-3">
+      {SECTIONS.map((section) => {
+        const content = getContentForSection(section.key)
+        const isUploading = uploading === section.key
 
-      <div className="grid gap-6">
-        {SECTIONS.map(section => {
-          const content = contents.find(c => c.section === section.key)
-          const isUploading = uploading === section.key
+        return (
+          <Card key={section.key} className="border-stone-200 overflow-hidden">
+            <CardContent className="p-4 space-y-4">
+              <div>
+                <h3 className="font-medium text-stone-800">{section.title}</h3>
+                <p className="text-sm text-stone-500">{section.description}</p>
+              </div>
 
-          return (
-            <Card key={section.key}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  {content?.content_type === 'video' ? (
-                    <Video className="h-5 w-5" />
-                  ) : (
-                    <ImageIcon className="h-5 w-5" />
-                  )}
-                  {section.label}
-                </CardTitle>
-                <CardDescription>{section.description}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Preview */}
-                <div className="relative aspect-video overflow-hidden rounded-lg bg-muted">
-                  {content?.content_type === 'video' ? (
+              {/* Preview */}
+              <div className="aspect-video bg-stone-100 rounded-lg overflow-hidden relative">
+                {content?.url ? (
+                  content.content_type === 'video' ? (
                     <video
                       src={content.url}
-                      className="h-full w-full object-cover"
-                      controls
+                      className="w-full h-full object-cover"
                       muted
-                    />
-                  ) : content?.url ? (
-                    <img
-                      src={content.url}
-                      alt={section.label}
-                      className="h-full w-full object-cover"
+                      loop
+                      playsInline
+                      autoPlay
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      Sin contenido
-                    </div>
-                  )}
-                </div>
-
-                {/* Type Selector */}
-                <div className="space-y-2">
-                  <Label>Tipo de contenido</Label>
-                  <RadioGroup
-                    value={content?.content_type || 'image'}
-                    onValueChange={(value) => handleTypeChange(section.key, value as 'video' | 'image')}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="image" id={`${section.key}-image`} />
-                      <Label htmlFor={`${section.key}-image`} className="cursor-pointer">
-                        Imagen
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="video" id={`${section.key}-video`} />
-                      <Label htmlFor={`${section.key}-video`} className="cursor-pointer">
-                        Video
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-
-                {/* Upload Button */}
-                <div>
-                  <Label
-                    htmlFor={`upload-${section.key}`}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 p-6 transition-colors hover:border-muted-foreground/50">
-                      {isUploading ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          <span>Subiendo...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="h-5 w-5" />
-                          <span>Subir {content?.content_type === 'video' ? 'video' : 'imagen'}</span>
-                        </>
-                      )}
-                    </div>
-                  </Label>
-                  <input
-                    id={`upload-${section.key}`}
-                    type="file"
-                    accept="image/*,video/*"
-                    className="hidden"
-                    disabled={isUploading}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0]
-                      if (file) handleFileUpload(section.key, file)
-                    }}
-                  />
-                </div>
-
-                {content?.updated_at && (
-                  <p className="text-xs text-muted-foreground">
-                    Ultima actualizacion: {new Date(content.updated_at).toLocaleDateString('es-CO', {
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
+                    <img
+                      src={content.url}
+                      alt={section.title}
+                      className="w-full h-full object-cover"
+                    />
+                  )
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ImageIcon className="h-10 w-10 text-stone-300" />
+                  </div>
                 )}
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+                {content && (
+                  <span className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs flex items-center gap-1">
+                    {content.content_type === 'video' ? <Video className="h-3 w-3" /> : <ImageIcon className="h-3 w-3" />}
+                    {content.content_type === 'video' ? 'Video' : 'Imagen'}
+                  </span>
+                )}
+              </div>
+
+              {/* Upload */}
+              <div>
+                <input
+                  ref={(el) => { fileInputRefs.current[section.key] = el }}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={(e) => handleInputChange(section.key, e)}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full border-stone-200"
+                  onClick={() => fileInputRefs.current[section.key]?.click()}
+                  disabled={isUploading}
+                >
+                  {isUploading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Subiendo...</>
+                  ) : (
+                    <><Upload className="mr-2 h-4 w-4" />{content ? 'Cambiar' : 'Subir'}</>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })}
     </div>
   )
 }

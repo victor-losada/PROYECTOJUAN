@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Plus, Pencil, Trash2, Search, Loader2, Package, Upload, X, ImageIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { CATEGORIAS, SUBCATEGORIAS, type Producto } from '@/lib/types'
+import { getMuestrasList } from '@/lib/muestras'
 import { cn } from '@/lib/utils'
 
 interface ProductsManagerProps {
@@ -54,6 +55,8 @@ type ProductFormData = {
   tiempo_secado: string
   proceso: string
   presentacion: string
+  /** Varias opciones de muestra (gramos + precio) */
+  muestras_filas: { cantidad: string; precio: string }[]
 }
 
 const defaultFormData: ProductFormData = {
@@ -77,6 +80,7 @@ const defaultFormData: ProductFormData = {
   tiempo_secado: '',
   proceso: '',
   presentacion: '',
+  muestras_filas: [],
 }
 
 function formatPrice(price: number): string {
@@ -142,6 +146,11 @@ export function ProductsManager({ productos }: ProductsManagerProps) {
       tiempo_secado: producto.tiempo_secado || '',
       proceso: producto.proceso || '',
       presentacion: producto.presentacion || '',
+      muestras_filas:
+        getMuestrasList(producto).map((m) => ({
+          cantidad: String(m.cantidad ?? '').trim(),
+          precio: m.precio != null ? String(m.precio) : '',
+        })),
     })
     setImagePreview(producto.imagen_url || null)
     setIsDialogOpen(true)
@@ -218,10 +227,30 @@ export function ProductsManager({ productos }: ProductsManagerProps) {
         : '/api/admin/products'
       const method = selectedProduct ? 'PUT' : 'POST'
 
+      const muestras: { cantidad: string; precio: number }[] = []
+      for (const row of formData.muestras_filas) {
+        const c = row.cantidad.trim()
+        const p = row.precio.trim()
+        if (!c && !p) continue
+        const precioNum = Number(p)
+        if (!c || !p || Number.isNaN(precioNum) || precioNum <= 0) {
+          toast.error(
+            'En muestras: completa gramos y precio en cada fila, o quita la fila.',
+          )
+          setIsLoading(false)
+          return
+        }
+        muestras.push({ cantidad: c, precio: precioNum })
+      }
+
+      const { muestras_filas: _mf, ...productFields } = formData
+
+      const payload = { ...productFields, muestras }
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (!response.ok) throw new Error('Error saving product')
@@ -305,7 +334,9 @@ export function ProductsManager({ productos }: ProductsManagerProps) {
             </CardContent>
           </Card>
         ) : (
-          filteredProducts.map((producto) => (
+          filteredProducts.map((producto) => {
+            const muestrasProducto = getMuestrasList(producto)
+            return (
             <Card key={producto.id} className={cn("border-stone-200 overflow-hidden", !producto.activo && "opacity-60")}>
               <div className="aspect-square overflow-hidden bg-stone-100">
                 <img
@@ -328,6 +359,11 @@ export function ProductsManager({ productos }: ProductsManagerProps) {
                     )}
                     {producto.categoria && (
                       <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded">{producto.categoria}</span>
+                    )}
+                    {muestrasProducto.length > 0 && (
+                      <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
+                        {muestrasProducto.length} muestra(s)
+                      </span>
                     )}
                   </div>
                   <p className="text-sm text-stone-500 line-clamp-2">
@@ -359,7 +395,8 @@ export function ProductsManager({ productos }: ProductsManagerProps) {
                 </div>
               </CardContent>
             </Card>
-          ))
+            )
+          })
         )}
       </div>
 
@@ -373,9 +410,10 @@ export function ProductsManager({ productos }: ProductsManagerProps) {
           </DialogHeader>
           <form onSubmit={handleSubmit}>
             <Tabs defaultValue="general" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="general">Informacion General</TabsTrigger>
-                <TabsTrigger value="ficha">Ficha Tecnica</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 mb-4">
+                <TabsTrigger value="general">General</TabsTrigger>
+                <TabsTrigger value="ficha">Ficha tecnica</TabsTrigger>
+                <TabsTrigger value="muestra">Muestra</TabsTrigger>
               </TabsList>
               
               <TabsContent value="general" className="space-y-4">
@@ -682,6 +720,99 @@ export function ProductsManager({ productos }: ProductsManagerProps) {
                     />
                   </div>
                 </div>
+              </TabsContent>
+
+              <TabsContent value="muestra" className="space-y-4">
+                <p className="text-sm text-stone-500">
+                  Añade una fila por cada opción de muestra (por ejemplo 100 g, 120 g, 150 g con
+                  su precio). Se guardan en la tabla <strong>muestras</strong>. El cliente puede
+                  elegir bolsa completa o una muestra, pero no ambas a la vez en el carrito.
+                </p>
+                <div className="space-y-3">
+                  {formData.muestras_filas.map((row, index) => (
+                    <div
+                      key={index}
+                      className="grid grid-cols-1 gap-3 rounded-lg border border-stone-200 p-3 sm:grid-cols-[1fr_1fr_auto]"
+                    >
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Gramos</Label>
+                        <Input
+                          inputMode="numeric"
+                          value={row.cantidad}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setFormData((prev) => ({
+                              ...prev,
+                              muestras_filas: prev.muestras_filas.map((r, i) =>
+                                i === index ? { ...r, cantidad: v } : r,
+                              ),
+                            }))
+                          }}
+                          placeholder="Ej: 100"
+                          className="border-stone-200"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Precio (COP)</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={row.precio}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setFormData((prev) => ({
+                              ...prev,
+                              muestras_filas: prev.muestras_filas.map((r, i) =>
+                                i === index ? { ...r, precio: v } : r,
+                              ),
+                            }))
+                          }}
+                          placeholder="Ej: 15000"
+                          className="border-stone-200"
+                        />
+                      </div>
+                      <div className="flex items-end sm:justify-end">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-stone-500"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              muestras_filas: prev.muestras_filas.filter((_, i) => i !== index),
+                            }))
+                          }
+                        >
+                          Quitar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="border-stone-300"
+                  onClick={() =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      muestras_filas: [
+                        ...prev.muestras_filas,
+                        { cantidad: '', precio: '' },
+                      ],
+                    }))
+                  }
+                >
+                  <Plus className="mr-1 h-3 w-3" />
+                  Añadir opción de muestra
+                </Button>
+                <p className="text-xs text-stone-500 rounded-lg bg-stone-50 p-3 border border-stone-100">
+                  Sin filas = el producto no tendrá venta por muestra. Puedes varias cantidades y
+                  precios distintos.
+                </p>
               </TabsContent>
             </Tabs>
 

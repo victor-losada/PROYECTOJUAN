@@ -1,3 +1,11 @@
+export interface Muestra {
+  id: number
+  created_at?: string
+  /** Gramos ofrecidos (ej. "150", "230") */
+  cantidad: string
+  precio: number
+}
+
 export interface Producto {
   id: string
   nombre: string
@@ -9,6 +17,8 @@ export interface Producto {
   stock: number
   activo: boolean
   disponible: boolean
+  /** Muestras asociadas (varias cantidades/precios por producto) */
+  muestras?: Muestra[] | null
   // Ficha técnica
   origen: string | null
   nombre_finca: string | null
@@ -28,6 +38,10 @@ export interface Producto {
 export interface CartItem {
   producto: Producto
   cantidad: number
+  /** true = línea de muestra */
+  esMuestra: boolean
+  /** id en tabla `muestras` cuando esMuestra es true */
+  muestraId?: number
 }
 
 export interface Pedido {

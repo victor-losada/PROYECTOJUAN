@@ -12,6 +12,18 @@ CREATE TABLE IF NOT EXISTS productos (
   imagen_url TEXT,
   stock INTEGER NOT NULL DEFAULT 0,
   activo BOOLEAN DEFAULT true,
+  disponible BOOLEAN DEFAULT true,
+  origen TEXT,
+  nombre_finca TEXT,
+  productor TEXT,
+  altitud TEXT,
+  cosecha TEXT,
+  puntaje_sca NUMERIC(4, 2),
+  perfil_sensorial TEXT,
+  metodo_secado TEXT,
+  tiempo_secado TEXT,
+  proceso TEXT,
+  presentacion TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

@@ -9,6 +9,11 @@ import { Label } from '@/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Textarea } from '@/components/ui/textarea'
 import { useCart } from '@/components/cart/cart-provider'
+import {
+  getCartItemLineTotal,
+  getCartItemUnitPrice,
+  orderItemNombreProducto,
+} from '@/lib/cart-line'
 import { toast } from 'sonner'
 import { Truck, Store, CreditCard, Loader2 } from 'lucide-react'
 
@@ -64,10 +69,10 @@ export function CheckoutForm() {
           ...formData,
           items: items.map((item) => ({
             producto_id: item.producto.id,
-            nombre_producto: item.producto.nombre,
-            precio_unitario: item.producto.precio,
+            nombre_producto: orderItemNombreProducto(item),
+            precio_unitario: getCartItemUnitPrice(item),
             cantidad: item.cantidad,
-            subtotal: item.producto.precio * item.cantidad,
+            subtotal: getCartItemLineTotal(item),
           })),
           subtotal: getTotal(),
           total: getTotal(),

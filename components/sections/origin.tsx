@@ -1,10 +1,8 @@
 'use client'
 
-
-
+import { SectionMedia } from '@/components/sections/section-media'
 
 export function Origin() {
-
   return (
     <section id="origen" className="py-16 lg:py-24 bg-white">
       <div className="container mx-auto px-4 lg:px-8">
@@ -15,14 +13,16 @@ export function Origin() {
 
         {/* Content Grid */}
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-          {/* Image or Video */}
+          {/* Image or Video (desde panel admin → Contenido) */}
           <div className="relative">
-            <div className="aspect-[4/3] overflow-hidden">    
-                <img
-                  src={ "/images/origenfinca.png"}
-                  alt="Finca cafetera en las montanas de Huila, Colombia"
-                  className="h-full w-full object-cover"
-                />
+            <div className="aspect-[4/3]">
+              <SectionMedia
+                section="origin"
+                fallbackSrc="/images/origenfinca.png"
+                alt="Finca cafetera en las montanas de Huila, Colombia"
+                className="h-full rounded-lg"
+                imgClassName="rounded-lg"
+              />
             </div>
           </div>
 

@@ -1,6 +1,7 @@
 'use client'
 
-import { Sprout, Sun, Flame, Package } from "lucide-react"
+import { Sprout, Sun, Flame, Package } from 'lucide-react'
+import { SectionMedia } from '@/components/sections/section-media'
 
 
 
@@ -32,21 +33,19 @@ const steps = [
 ]
 
 export function ProcessSection() {
-  
-
   return (
     <section id="proceso" className="bg-secondary py-24">
       <div className="mx-auto max-w-7xl px-6">
         <div className="grid items-start gap-12 lg:grid-cols-2">
-          {/* Left - Image or Video */}
-          <div className="relative aspect-[3/4] overflow-hidden rounded-md lg:sticky lg:top-24">
-            
-              <img
-                src={"/images/process.png"}
-                alt="Proceso artesanal de tueste de cafe"
-                className="h-full w-full object-cover"
-              />
-            
+          {/* Left - Image or Video (desde panel admin → Contenido) */}
+          <div className="relative aspect-[3/4] rounded-md lg:sticky lg:top-24">
+            <SectionMedia
+              section="process"
+              fallbackSrc="/images/process.png"
+              alt="Proceso artesanal de tueste de cafe"
+              className="h-full w-full rounded-md"
+              imgClassName="rounded-md"
+            />
           </div>
 
           {/* Right - Steps */}

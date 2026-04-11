@@ -46,7 +46,7 @@ export function ContentManager() {
       const response = await fetch('/api/admin/site-content')
       if (response.ok) {
         const data = await response.json()
-        setContents(data.contents || [])
+        setContents(Array.isArray(data) ? data : data.contents ?? [])
       }
     } catch (error) {
       console.error('Error fetching contents:', error)
@@ -71,24 +71,31 @@ export function ContentManager() {
         body: formData,
       })
 
-      if (!uploadResponse.ok) throw new Error('Error uploading file')
+      if (!uploadResponse.ok) throw new Error('Error uploading file' )
 
       const { url } = await uploadResponse.json()
       const contentType = file.type.startsWith('video/') ? 'video' : 'image'
 
       const response = await fetch('/api/admin/site-content', {
-        method: 'POST',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ section, content_type: contentType, url }),
       })
 
-      if (!response.ok) throw new Error('Error saving content')
+      if (!response.ok) {
+        const errBody = await response.json().catch(() => ({}))
+        throw new Error(
+          typeof errBody.error === 'string' ? errBody.error : 'Error saving content'
+        )
+      }
 
       toast.success('Contenido actualizado')
       fetchContents()
     } catch (error) {
       console.error('Upload error:', error)
-      toast.error('Error al subir el archivo')
+      const message =
+        error instanceof Error ? error.message : 'Error al subir el archivo'
+      toast.error(message)
     } finally {
       setUploading(null)
     }

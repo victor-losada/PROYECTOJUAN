@@ -7,6 +7,8 @@ import { Separator } from '@/components/ui/separator'
 import { useCart } from './cart-provider'
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react'
 import Link from 'next/link'
+import { cartItemKey, getCartItemLineTotal, getCartItemUnitPrice } from '@/lib/cart-line'
+import { getMuestrasList } from '@/lib/muestras'
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('es-CO', {
@@ -54,7 +56,7 @@ export function CartDrawer() {
             <ScrollArea className="flex-1 -mx-6 px-6">
               <div className="space-y-4 py-4">
                 {items.map((item) => (
-                  <div key={item.producto.id} className="flex gap-4">
+                  <div key={cartItemKey(item)} className="flex gap-4">
                     <div className="h-20 w-20 overflow-hidden bg-stone-100 shrink-0">
                       <img
                         src={item.producto.imagen_url || '/images/placeholder-coffee.jpg'}
@@ -63,18 +65,39 @@ export function CartDrawer() {
                       />
                     </div>
                     <div className="flex-1 space-y-1">
-                      <h4 className="font-serif text-sm text-stone-800 line-clamp-1">
-                        {item.producto.nombre}
+                      <h4 className="font-serif text-sm text-stone-800 line-clamp-2">
+                        {item.esMuestra && item.muestraId != null
+                          ? (() => {
+                              const m = getMuestrasList(item.producto).find(
+                                (x) => Number(x.id) === item.muestraId,
+                              )
+                              return m
+                                ? `Muestra (${m.cantidad} g)`
+                                : 'Muestra'
+                            })()
+                          : item.producto.nombre}
                       </h4>
+                      {item.esMuestra && (
+                        <p className="text-xs text-stone-400 line-clamp-2">
+                          {item.producto.nombre}
+                        </p>
+                      )}
                       <p className="text-sm text-stone-500">
-                        {formatPrice(item.producto.precio)}
+                        {formatPrice(getCartItemUnitPrice(item))} c/u
                       </p>
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="icon"
                           className="h-7 w-7 rounded-none border-stone-300"
-                          onClick={() => updateQuantity(item.producto.id, item.cantidad - 1)}
+                          onClick={() =>
+                            updateQuantity(
+                              item.producto.id,
+                              item.esMuestra,
+                              item.cantidad - 1,
+                              item.muestraId,
+                            )
+                          }
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
@@ -85,7 +108,14 @@ export function CartDrawer() {
                           variant="outline"
                           size="icon"
                           className="h-7 w-7 rounded-none border-stone-300"
-                          onClick={() => updateQuantity(item.producto.id, item.cantidad + 1)}
+                          onClick={() =>
+                            updateQuantity(
+                              item.producto.id,
+                              item.esMuestra,
+                              item.cantidad + 1,
+                              item.muestraId,
+                            )
+                          }
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
@@ -93,7 +123,13 @@ export function CartDrawer() {
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 text-stone-400 hover:text-stone-800"
-                          onClick={() => removeItem(item.producto.id)}
+                          onClick={() =>
+                            removeItem(
+                              item.producto.id,
+                              item.esMuestra,
+                              item.muestraId,
+                            )
+                          }
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -101,7 +137,7 @@ export function CartDrawer() {
                     </div>
                     <div className="text-right">
                       <p className="font-serif text-sm text-stone-800">
-                        {formatPrice(item.producto.precio * item.cantidad)}
+                        {formatPrice(getCartItemLineTotal(item))}
                       </p>
                     </div>
                   </div>

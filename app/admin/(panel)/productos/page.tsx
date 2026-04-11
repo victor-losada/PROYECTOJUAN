@@ -5,7 +5,7 @@ async function getProducts() {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('productos')
-    .select('*')
+    .select('*, muestras ( id, cantidad, precio, created_at )')
     .order('created_at', { ascending: false })
 
   if (error) {

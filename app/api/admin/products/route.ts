@@ -1,34 +1,72 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+const PRODUCT_SELECT = '*, muestras ( id, cantidad, precio, created_at )'
+
+type MuestraInput = { cantidad: string; precio: number }
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
 
-    // Check if user is authenticated
-    const { data: { user } } = await supabase.auth.getUser()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
     const body = await request.json()
-    const { 
-      nombre, descripcion, precio, categoria, subcategoria, imagen_url, stock, activo, disponible,
-      origen, nombre_finca, productor, altitud, cosecha, puntaje_sca, perfil_sensorial,
-      metodo_secado, tiempo_secado, proceso, presentacion
+    const {
+      muestras: muestrasBody,
+      nombre,
+      descripcion,
+      precio,
+      categoria,
+      subcategoria,
+      imagen_url,
+      stock,
+      activo,
+      disponible,
+      origen,
+      nombre_finca,
+      productor,
+      altitud,
+      cosecha,
+      puntaje_sca,
+      perfil_sensorial,
+      metodo_secado,
+      tiempo_secado,
+      proceso,
+      presentacion,
     } = body
 
     if (!nombre || precio === undefined || !categoria) {
       return NextResponse.json(
         { error: 'Campos obligatorios faltantes' },
-        { status: 400 }
+        { status: 400 },
       )
     }
 
-    const { data: producto, error } = await supabase
+    let muestras: MuestraInput[] = []
+    if (Array.isArray(muestrasBody) && muestrasBody.length > 0) {
+      for (const row of muestrasBody) {
+        const cantidad = String(row.cantidad ?? '').trim()
+        const pr = Number(row.precio)
+        if (!cantidad || Number.isNaN(pr) || pr <= 0) {
+          return NextResponse.json(
+            {
+              error:
+                'Cada muestra debe tener gramos y un precio mayor a cero',
+            },
+            { status: 400 },
+          )
+        }
+        muestras.push({ cantidad, precio: pr })
+      }
+    }
+
+    const { data: inserted, error } = await supabase
       .from('productos')
       .insert({
         nombre,
@@ -52,14 +90,47 @@ export async function POST(request: NextRequest) {
         proceso: proceso || null,
         presentacion: presentacion || null,
       })
-      .select()
+      .select('id')
       .single()
 
-    if (error) {
+    if (error || !inserted) {
       console.error('Error creating product:', error)
       return NextResponse.json(
         { error: 'Error al crear el producto' },
-        { status: 500 }
+        { status: 500 },
+      )
+    }
+
+    const pid = inserted.id as string
+
+    if (muestras.length > 0) {
+      const { error: mErr } = await supabase.from('muestras').insert(
+        muestras.map((m) => ({
+          cantidad: m.cantidad,
+          precio: m.precio,
+          producto_id: pid,
+        })),
+      )
+      if (mErr) {
+        console.error('Error creating muestras:', mErr)
+        await supabase.from('productos').delete().eq('id', pid)
+        return NextResponse.json(
+          { error: 'Error al crear las muestras' },
+          { status: 500 },
+        )
+      }
+    }
+
+    const { data: producto, error: fetchErr } = await supabase
+      .from('productos')
+      .select(PRODUCT_SELECT)
+      .eq('id', pid)
+      .single()
+
+    if (fetchErr || !producto) {
+      return NextResponse.json(
+        { error: 'Producto creado pero no se pudo cargar' },
+        { status: 500 },
       )
     }
 
@@ -68,7 +139,7 @@ export async function POST(request: NextRequest) {
     console.error('Product creation error:', error)
     return NextResponse.json(
       { error: 'Error interno del servidor' },
-      { status: 500 }
+      { status: 500 },
     )
   }
 }

@@ -3,6 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useCart } from '@/components/cart/cart-provider'
+import { cartItemKey, getCartItemLineTotal } from '@/lib/cart-line'
+import { getMuestrasList } from '@/lib/muestras'
 import { Shield, Truck } from 'lucide-react'
 
 function formatPrice(price: number): string {
@@ -27,7 +29,7 @@ export function OrderSummary() {
           {/* Items */}
           <div className="space-y-3">
             {items.map((item) => (
-              <div key={item.producto.id} className="flex gap-3">
+              <div key={cartItemKey(item)} className="flex gap-3">
                 <div className="h-16 w-16 overflow-hidden rounded-lg bg-secondary shrink-0">
                   <img
                     src={item.producto.imagen_url || '/images/placeholder-coffee.jpg'}
@@ -36,16 +38,30 @@ export function OrderSummary() {
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="font-medium text-sm line-clamp-1">
-                    {item.producto.nombre}
+                  <h4 className="font-medium text-sm line-clamp-2">
+                    {item.esMuestra && item.muestraId != null
+                      ? (() => {
+                          const m = getMuestrasList(item.producto).find(
+                            (x) => Number(x.id) === item.muestraId,
+                          )
+                          return m
+                            ? `Muestra (${m.cantidad} g)`
+                            : 'Muestra'
+                        })()
+                      : item.producto.nombre}
                   </h4>
+                  {item.esMuestra && (
+                    <p className="text-xs text-muted-foreground line-clamp-1">
+                      {item.producto.nombre}
+                    </p>
+                  )}
                   <p className="text-sm text-muted-foreground">
                     Cantidad: {item.cantidad}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="font-medium text-sm">
-                    {formatPrice(item.producto.precio * item.cantidad)}
+                    {formatPrice(getCartItemLineTotal(item))}
                   </p>
                 </div>
               </div>
